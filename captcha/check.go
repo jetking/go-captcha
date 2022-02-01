@@ -22,9 +22,9 @@ import "math"
  */
 func CheckPointDist(sx, sy, dx, dy, width, height int64) bool {
 	return sx >= dx &&
-		sx <= dx + width &&
+		sx <= dx+width &&
 		sy <= dy &&
-		sy >= dy - height
+		sy >= dy-height
 }
 
 // CheckPointDistWithPadding is a function
@@ -42,11 +42,11 @@ func CheckPointDist(sx, sy, dx, dy, width, height int64) bool {
 func CheckPointDistWithPadding(sx, sy, dx, dy, width, height, padding int64) bool {
 	newWidth := width + (padding * 2)
 	newHeight := height + (padding * 2)
-	newDx := int64(math.Max(float64(dx), float64(dx - padding)))
+	newDx := int64(math.Max(float64(dx), float64(dx-padding)))
 	newDy := dy + padding
 
 	return sx >= newDx &&
-		sx <= newDx + newWidth &&
+		sx <= newDx+newWidth &&
 		sy <= newDy &&
-		sy >= newDy - newHeight
+		sy >= newDy-newHeight
 }

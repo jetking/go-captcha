@@ -7,15 +7,14 @@
 package main
 
 import (
-	"encoding/base64"
+	"bytes"
 	"fmt"
-	"github.com/wenlng/go-captcha/captcha"
 	"io"
-	"log"
 	"os"
-	"strings"
 	"sync"
 	"testing"
+
+	"github.com/wenlng/go-captcha/captcha"
 )
 
 // go test -race base.go captcha_test.go
@@ -31,6 +30,44 @@ func TestGetCaptchaGoroutine(t *testing.T) {
 	}
 
 	wg.Wait()
+}
+
+func TestGenerate(t *testing.T) {
+	capt := captcha.GetCaptcha()
+	capt.SetTextRangLen(captcha.RangeVal{Min: 5, Max: 7})
+	dot, data, tData, key, err := capt.Generate()
+	if err != nil {
+		t.Log("err:", err)
+		t.FailNow()
+	}
+	fmt.Printf("dot:%#v\n", dot)
+	fmt.Println("key:", key)
+
+	filename := captcha.RandInt(1, 200)
+	file := getPWD() + "/tests/.cache/" + fmt.Sprintf("%v", filename) + ".jpg"
+	f, err := os.OpenFile(file, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		fmt.Println("os.OpenFile() fail:", err)
+		t.FailNow()
+	}
+	defer f.Close()
+	dataReader := bytes.NewReader(data)
+	if _, err = io.Copy(f, dataReader); err != nil {
+		fmt.Println("io.Copy() fail:", err)
+	}
+
+	file = getPWD() + "/tests/.cache/" + fmt.Sprintf("%v", filename) + "_t.jpg"
+	f, err = os.OpenFile(file, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		fmt.Println("os.OpenFile() fail:", err)
+		t.FailNow()
+	}
+	defer f.Close()
+	dataReader = bytes.NewReader(tData)
+	if _, err = io.Copy(f, dataReader); err != nil {
+		fmt.Println("io.Copy() fail:", err)
+	}
+
 }
 
 func TestImageSize(t *testing.T) {
@@ -58,7 +95,7 @@ func TestSetThumbSize(t *testing.T) {
 	_ = capt.SetRangChars(chars)
 	//capt.SetImageFontDistort(0)
 	//capt.SetImageFontDistort(0)
-	dots, b64, tb64, key, err := capt.Generate()
+	dots, data, tData, key, err := capt.Generate()
 	if err != nil {
 		panic(err)
 		return
@@ -66,19 +103,15 @@ func TestSetThumbSize(t *testing.T) {
 	file := getPWD() + "/tests/.cache/" + fmt.Sprintf("%v", captcha.RandInt(1, 200)) + "Img.png"
 	logFile, _ := os.OpenFile(file, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 	defer logFile.Close()
-	i := strings.Index(b64, ",")
-	if i < 0 {
-		log.Fatal("no comma")
-	}
-	dec := base64.NewDecoder(base64.StdEncoding, strings.NewReader(b64[i+1:]))
-	io.Copy(logFile, dec)
+	dataReader := bytes.NewReader(data)
+	_, err = io.Copy(logFile, dataReader)
 
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Println(len(b64))
-	fmt.Println(len(tb64))
+	fmt.Println(len(data))
+	fmt.Println(len(tData))
 	fmt.Println(key)
 	fmt.Println(dots)
 }
